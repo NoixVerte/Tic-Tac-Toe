@@ -1,0 +1,35 @@
+body {
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.turn-label {
+    width: 100%;
+    text-align: center;
+    font-size: 1.5rem;
+}
+
+.gameboard {
+    height: 30rem;
+    width: 30rem;
+    border: 1px solid black;
+    display: grid;
+    grid-template-columns: 10rem 10rem 10rem;
+    grid-template-rows: 10rem 10rem 10rem;
+}
+
+.square {
+    border: 1px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 5rem;
+    cursor: pointer;
+}
+
+.square:hover {
+    background-color: rgb(230, 230, 230);
+}
