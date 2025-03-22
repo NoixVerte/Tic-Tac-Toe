@@ -1,30 +1,35 @@
-const gameboard = (function () {
-    let board = [["X", "X", "O"], 
-                ["O", "O", "X"], 
-                ["X", "O", "O"]];
+const turnLabel = document.querySelector(".turn-label");
 
-    function drawGameboard() {
-        let drawnBoard = "";
-        for (let i = 0; i < 3; i++) {
-            drawnBoard += "+-----------+\n|";
-            for (let j = 0; j < 3;  j++) {
-                drawnBoard += " " + board[i][j] + " |";
+const gameboard = (function () {
+    let board = [["", "", ""], 
+                ["", "", ""], 
+                ["", "", ""]];
+    const displayedGameboard = document.querySelector(".gameboard");
+    const squares = document.querySelectorAll(".square");
+
+    function updateGameBoard() {
+        let iterableBoard = [];
+        for (let i = 0; i < 3; i++)  {
+            for (let j = 0; j < 3; j++) {
+                iterableBoard.push(board[i][j])
             }
-            drawnBoard += "\n";
         }
-        drawnBoard += "+-----------+\n";
-        console.log(drawnBoard);
-    };
+
+        for (let i = 0; i < 9; i++) {
+            squares.item(i).textContent = iterableBoard[i];
+        }
+    }
 
     function addMarker(marker, row, column) {
         board[row - 1][column - 1] = marker;
     };
 
-    return { board, drawGameboard, addMarker };
+    return { board, displayedGameboard, updateGameBoard, addMarker };
 
 })();
 
 const player = (function (marker) {
+    let name;
     let playerMarker = marker;
     let score = 0;
 
@@ -34,31 +39,25 @@ const player = (function (marker) {
     
     const showScore = function () {
         console.log(score);
+        return score;
     }
 
-    return { playerMarker, increaseScore, showScore };
+    return { name, playerMarker, increaseScore, showScore };
 
 });
 
 const gameFlow = (function () {
     const player1 = player("X");
     const player2 = player("O");
-    let round = 0;
+    let round = 1;
 
-    function checkForWin() {
-        for (let i = 0; i < 2; i++) {
-            for (let j = 0; j < 2; j++) {
-                if (gameboard.board[i][j] != " ") {
-                    round++;
-                }
-            }
-        }
+    function checkForEnd() {
         let winner = "";
         for (let i = 0; i < 3; i++) {
-            if (gameboard.board[i][0] != " " && gameboard.board[i][0] === gameboard.board[i][1] && gameboard.board[i][0] === gameboard.board[i][2]) {
+            if (gameboard.board[i][0] != "" && gameboard.board[i][0] === gameboard.board[i][1] && gameboard.board[i][0] === gameboard.board[i][2]) {
                 winner = gameboard.board[i][0];
             }
-            if (gameboard.board[0][i] != " " && gameboard.board[0][i] === gameboard.board[1][i] && gameboard.board[0][i] === gameboard.board[2][i]) {
+            if (gameboard.board[0][i] != "" && gameboard.board[0][i] === gameboard.board[1][i] && gameboard.board[0][i] === gameboard.board[2][i]) {
                 winner = gameboard.board[0][i];
             }
         }
@@ -69,19 +68,42 @@ const gameFlow = (function () {
         }
 
         if (winner == "X") {
-            console.log("Player 1 wins!");
+            turnLabel.innerText = "X wins!";
             player1.increaseScore();
+            gameFlow.round = 1;
+            return true;
         } else if (winner == "O") {
-            console.log("Player 2 wins!");
+            turnLabel.innerText= "O wins!";
             player2.increaseScore();
-        } else if (round == 9) {
-            console.log("It's a tie!");
-            round = 0;
+            gameFlow.round = 1;
+            return true;
+        } else if (gameFlow.round == 10) {
+            turnLabel.innerText = "It's a tie!";
+            gameFlow.round = 1;
+            return true;
         }
+
+        return false;
     }
 
-    return { player1, player2, checkForWin, round }; 
+    return { player1, player2, checkForEnd, round }; 
 
 })();
 
-gameboard.drawGameboard();
+gameboard.displayedGameboard.addEventListener("click", (event) => {
+    if (event.target.innerText == "" && !gameFlow.checkForEnd()) {
+        event.target.innerText = (gameFlow.round % 2) == 0 ? 'O' : 'X';
+        gameFlow.round++;
+        let counter = 0;
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                gameboard.board[i][j] = gameboard.displayedGameboard.children[counter].innerText;
+                counter++;
+            }
+        }
+    }
+    turnLabel.innerText = (gameFlow.round % 2) == 0 ? "It is O's turn!" : "It is X's turn!";
+    gameFlow.checkForEnd(); 
+});
+
+gameboard.updateGameBoard();
