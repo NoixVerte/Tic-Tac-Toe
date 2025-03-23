@@ -24,7 +24,16 @@ const gameboard = (function () {
         board[row - 1][column - 1] = marker;
     };
 
-    return { board, displayedGameboard, updateGameBoard, addMarker };
+    function wipeGameBoard() {
+        gameboard.board = [["", "", ""], 
+                        ["", "", ""], 
+                        ["", "", ""]];
+        for (let i = 0; i < 9; i++) {
+            squares.item(i).textContent = "";
+        }
+    }
+
+    return { board, displayedGameboard, updateGameBoard, wipeGameBoard, addMarker };
 
 })();
 
@@ -38,7 +47,6 @@ const player = (function (marker) {
     }
     
     const showScore = function () {
-        console.log(score);
         return score;
     }
 
@@ -50,6 +58,7 @@ const gameFlow = (function () {
     const player1 = player("X");
     const player2 = player("O");
     let round = 1;
+    const scoreboard = document.getElementById("scoreboard");
 
     function checkForEnd() {
         let winner = "";
@@ -70,16 +79,15 @@ const gameFlow = (function () {
         if (winner == "X") {
             turnLabel.innerText = "X wins!";
             player1.increaseScore();
-            gameFlow.round = 1;
+            scoreboard.firstElementChild.innerText = "X's score: " + player1.showScore();
             return true;
         } else if (winner == "O") {
             turnLabel.innerText= "O wins!";
             player2.increaseScore();
-            gameFlow.round = 1;
+            scoreboard.lastElementChild.innerText = "O's score: " + player2.showScore();
             return true;
         } else if (gameFlow.round == 10) {
             turnLabel.innerText = "It's a tie!";
-            gameFlow.round = 1;
             return true;
         }
 
@@ -106,4 +114,8 @@ gameboard.displayedGameboard.addEventListener("click", (event) => {
     gameFlow.checkForEnd(); 
 });
 
-gameboard.updateGameBoard();
+document.getElementById("new-game-btn").addEventListener("click", () => {
+    gameFlow.round = 1;
+    gameboard.wipeGameBoard();
+    turnLabel.textContent = "It is X's turn!";
+});
