@@ -16,7 +16,7 @@ const gameboard = (function () {
         }
 
         for (let i = 0; i < 9; i++) {
-            squares.item(i).textContent = iterableBoard[i];
+            squares[i].textContent = iterableBoard[i];
         }
     }
 
@@ -38,7 +38,7 @@ const gameboard = (function () {
 })();
 
 const player = (function (marker) {
-    let name;
+    let name = marker;
     let playerMarker = marker;
     let score = 0;
 
@@ -55,51 +55,68 @@ const player = (function (marker) {
 });
 
 const gameFlow = (function () {
+    const scoreboard = document.getElementById("scoreboard");
     const player1 = player("X");
     const player2 = player("O");
+    let winner = "";
     let round = 1;
-    const scoreboard = document.getElementById("scoreboard");
+    let finalRound = 10;
 
     function checkForEnd() {
-        let winner = "";
+        //Check for horizontal and vertical matches
         for (let i = 0; i < 3; i++) {
             if (gameboard.board[i][0] != "" && gameboard.board[i][0] === gameboard.board[i][1] && gameboard.board[i][0] === gameboard.board[i][2]) {
                 winner = gameboard.board[i][0];
+                return true;
             }
             if (gameboard.board[0][i] != "" && gameboard.board[0][i] === gameboard.board[1][i] && gameboard.board[0][i] === gameboard.board[2][i]) {
                 winner = gameboard.board[0][i];
+                return true;
             }
         }
-        if (!winner) {
-            if ( (gameboard.board[0][0] == gameboard.board[1][1] && gameboard.board[0][0] == gameboard.board[2][2]) || (gameboard.board[0][2] == gameboard.board[1][1] && gameboard.board[0][2] == gameboard.board[2][0]) ) {
+        //Check the diagonal matches, otherwise give a tie if game is in final round
+        if (winner != player1.marker && winner != player2.marker) {
+            if (gameboard.board[1][1] != "" && ((gameboard.board[0][0] === gameboard.board[1][1] && gameboard.board[0][0] === gameboard.board[2][2]) || (gameboard.board[0][2] === gameboard.board[1][1] && gameboard.board[0][2] === gameboard.board[2][0]))) {
                 winner = gameboard.board[1][1];
+                return true;
+            } else if (gameFlow.round === gameFlow.finalRound) {
+                return true;
             }
         }
-
-        if (winner == "X") {
-            turnLabel.innerText = "X wins!";
-            player1.increaseScore();
-            scoreboard.firstElementChild.innerText = "X's score: " + player1.showScore();
-            return true;
-        } else if (winner == "O") {
-            turnLabel.innerText= "O wins!";
-            player2.increaseScore();
-            scoreboard.lastElementChild.innerText = "O's score: " + player2.showScore();
-            return true;
-        } else if (gameFlow.round == 10) {
-            turnLabel.innerText = "It's a tie!";
-            return true;
-        }
-
+        
         return false;
     }
 
-    return { player1, player2, checkForEnd, round }; 
+    function manageGameEnd() {
+        if (winner === "X") {
+            turnLabel.innerText = player1.name + " wins!";
+            player1.increaseScore();
+            scoreboard.firstElementChild.innerText = "X's score: " + player1.showScore();
+        } else if (winner === "O") {
+            turnLabel.innerText= player2.name + " wins!";
+            player2.increaseScore();
+            scoreboard.lastElementChild.innerText = "O's score: " + player2.showScore();
+        } else if (gameFlow.round === finalRound) {
+            turnLabel.innerText = "It's a tie!";
+        }
+    }
+
+    function resetGame() {
+        winner = "";
+        gameboard.wipeGameBoard();
+        gameFlow.round = 1;
+        turnLabel.textContent = "It is X's turn!";
+    }
+
+    return { player1, player2, checkForEnd, manageGameEnd, resetGame, round, finalRound, winner }; 
 
 })();
 
 gameboard.displayedGameboard.addEventListener("click", (event) => {
-    if (event.target.innerText == "" && !gameFlow.checkForEnd()) {
+    if (gameFlow.checkForEnd()) {
+        return;
+    }
+    if (event.target.innerText === "" && !gameFlow.checkForEnd()) {
         event.target.innerText = (gameFlow.round % 2) == 0 ? 'O' : 'X';
         gameFlow.round++;
         let counter = 0;
@@ -110,12 +127,9 @@ gameboard.displayedGameboard.addEventListener("click", (event) => {
             }
         }
     }
-    turnLabel.innerText = (gameFlow.round % 2) == 0 ? "It is O's turn!" : "It is X's turn!";
-    gameFlow.checkForEnd(); 
+    if (gameFlow.checkForEnd()) {
+        gameFlow.manageGameEnd();
+    } else turnLabel.innerText = (gameFlow.round % 2) === 0 ? "It is O's turn!" : "It is X's turn!";
 });
 
-document.getElementById("new-game-btn").addEventListener("click", () => {
-    gameFlow.round = 1;
-    gameboard.wipeGameBoard();
-    turnLabel.textContent = "It is X's turn!";
-});
+document.getElementById("new-game-btn").addEventListener("click", gameFlow.resetGame);
