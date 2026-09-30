@@ -1,4 +1,5 @@
 const turnLabel = document.querySelector(".turn-label");
+const scoreboard = document.getElementById("scoreboard");
 
 const gameboard = (function () {
     let board = [["", "", ""], 
@@ -55,7 +56,6 @@ const player = (function (marker) {
 });
 
 const gameFlow = (function () {
-    const scoreboard = document.getElementById("scoreboard");
     const player1 = player("X");
     const player2 = player("O");
     let winner = "";
@@ -66,18 +66,18 @@ const gameFlow = (function () {
         //Check for horizontal and vertical matches
         for (let i = 0; i < 3; i++) {
             if (gameboard.board[i][0] != "" && gameboard.board[i][0] === gameboard.board[i][1] && gameboard.board[i][0] === gameboard.board[i][2]) {
-                winner = gameboard.board[i][0];
+                gameFlow.winner = gameboard.board[i][0];
                 return true;
             }
             if (gameboard.board[0][i] != "" && gameboard.board[0][i] === gameboard.board[1][i] && gameboard.board[0][i] === gameboard.board[2][i]) {
-                winner = gameboard.board[0][i];
+                gameFlow.winner = gameboard.board[0][i];
                 return true;
             }
         }
         //Check the diagonal matches, otherwise give a tie if game is in final round
-        if (winner != player1.marker && winner != player2.marker) {
+        if (gameFlow.winner != player1.marker && gameFlow.winner != player2.marker) {
             if (gameboard.board[1][1] != "" && ((gameboard.board[0][0] === gameboard.board[1][1] && gameboard.board[0][0] === gameboard.board[2][2]) || (gameboard.board[0][2] === gameboard.board[1][1] && gameboard.board[0][2] === gameboard.board[2][0]))) {
-                winner = gameboard.board[1][1];
+                gameFlow.winner = gameboard.board[1][1];
                 return true;
             } else if (gameFlow.round === gameFlow.finalRound) {
                 return true;
@@ -88,27 +88,27 @@ const gameFlow = (function () {
     }
 
     function manageGameEnd() {
-        if (winner === "X") {
+        if (gameFlow.winner === "X") {
             turnLabel.innerText = player1.name + " wins!";
             player1.increaseScore();
-            scoreboard.firstElementChild.innerText = "X's score: " + player1.showScore();
-        } else if (winner === "O") {
+            scoreboard.firstElementChild.innerText = gameFlow.player1.name  +  "'s score: " + player1.showScore();
+        } else if (gameFlow.winner === "O") {
             turnLabel.innerText= player2.name + " wins!";
             player2.increaseScore();
-            scoreboard.lastElementChild.innerText = "O's score: " + player2.showScore();
+            scoreboard.lastElementChild.innerText = gameFlow.player2.name + "'s score: " + player2.showScore();
         } else if (gameFlow.round === finalRound) {
             turnLabel.innerText = "It's a tie!";
         }
     }
 
     function resetGame() {
-        winner = "";
+        gameFlow.winner = "";
         gameboard.wipeGameBoard();
         gameFlow.round = 1;
-        turnLabel.textContent = "It is X's turn!";
+        turnLabel.textContent = "It is " +  gameFlow.player1.name + "'s turn!";
     }
 
-    return { player1, player2, checkForEnd, manageGameEnd, resetGame, round, finalRound, winner }; 
+    return { player1, player2, checkForEnd, manageGameEnd, resetGame, round, winner }; 
 
 })();
 
@@ -129,7 +129,45 @@ gameboard.displayedGameboard.addEventListener("click", (event) => {
     }
     if (gameFlow.checkForEnd()) {
         gameFlow.manageGameEnd();
-    } else turnLabel.innerText = (gameFlow.round % 2) === 0 ? "It is O's turn!" : "It is X's turn!";
+    } else turnLabel.innerText = (gameFlow.round % 2) === 0 ? "It is " + gameFlow.player2.name + "'s turn!" : "It is " + gameFlow.player1.name + "'s turn!";
 });
 
 document.getElementById("new-game-btn").addEventListener("click", gameFlow.resetGame);
+
+const change_names_popup = document.getElementById("change-names-popup");
+const change_names_popup_backgrnd = document.getElementById("change-names-popup-bckrgnd");
+const change_names_popup_forms = document.getElementsByClassName("change-name-form-wrapper");
+document.getElementById("change-names-btn").addEventListener("click", () => {
+    change_names_popup.style.visibility = "visible";
+    change_names_popup_backgrnd.style.visibility = "visible";
+    change_names_popup_forms[0].querySelector("span").innerText = gameFlow.player1.name  + "'s new name:"
+    change_names_popup_forms[1].querySelector("span").innerText = gameFlow.player2.name  + "'s new name:"
+});
+
+document.getElementById("cancel-names-popup-btn").addEventListener("click", () => {
+    change_names_popup.style.visibility = "hidden";
+    change_names_popup_backgrnd.style.visibility = "hidden";
+    change_names_popup_forms[0].querySelector("input").value = "";
+    change_names_popup_forms[1].querySelector("input").value = "";
+});
+
+document.getElementById("confirm-names-popup-btn").addEventListener("click", () => {
+    change_names_popup.style.visibility = "hidden";
+    change_names_popup_backgrnd.style.visibility = "hidden";
+    if (change_names_popup_forms[0].querySelector("input").value !== "") {
+        gameFlow.player1.name = change_names_popup_forms[0].querySelector("input").value;
+    }
+    if (change_names_popup_forms[1].querySelector("input").value !== "") {
+        gameFlow.player2.name = change_names_popup_forms[1].querySelector("input").value;
+    }
+    if (!gameFlow.checkForEnd())  {
+        turnLabel.innerText = (gameFlow.round % 2) === 0 ? "It is " + gameFlow.player2.name + "'s turn!" : "It is " + gameFlow.player1.name + "'s turn!";
+    } else {
+        if (gameFlow.winner === "X") turnLabel.innerText = gameFlow.player1.name + " wins!"
+        if (gameFlow.winner === "O") turnLabel.innerText = gameFlow.player2.name + " wins!"
+    }
+    scoreboard.firstElementChild.innerText = gameFlow.player1.name  +  "'s score: " + gameFlow.player1.showScore();
+    scoreboard.lastElementChild.innerText = gameFlow.player2.name + "'s score: " + gameFlow.player2.showScore();
+    change_names_popup_forms[0].querySelector("input").value = "";
+    change_names_popup_forms[1].querySelector("input").value = "";
+});
